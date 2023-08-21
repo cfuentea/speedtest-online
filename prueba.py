@@ -61,7 +61,7 @@ if __name__ == "__main__":
     latencia = mide_latencia(host)
     data = {
             'nodo': server_name, 
-            'date': datetime.today().strftime('%Y-%m-%d %H:%M:%S'), 
+            'date': hoy, 
             'host': host, 
             'latencia': latencia 
             }
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     if perdidos is not None:
         data = {
                 'nodo': server_name, 
-                'date': datetime.today().strftime('%Y-%m-%d %H:%M:%S'), 
+                'date': hoy, 
                 'host': host, 
                 'paquetes_perdidos': perdidos
                 }
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     dns_exitoso = prueba_resolucion_dns(dominio)
     data = {
             'nodo': server_name, 
-            'date': datetime.today().strftime('%Y-%m-%d %H:%M:%S'), 
+            'date': hoy, 
             'dominio': dominio, 
             'resolucion_exitosa': dns_exitoso
             }
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     ping = speed.results.ping
     
     result = {
-            'date': datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
+            'date': hoy,
             'download_speed_mbps': download_speed,
             'upload_speed_mbps': upload_speed,
             'ping_ms': ping,
