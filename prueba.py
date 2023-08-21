@@ -47,11 +47,12 @@ def prueba_resolucion_dns(dominio="www.google.com"):
         return False
 
 
-def inserta_db(data, coleccion):
+def insertar_db(data, coleccion):
     client = MongoClient(mongo_uri)
     db = client.Cluster0
     collection = db[coleccion]
     collection.insert_one(data)
+    client.close()
 
 if __name__ == "__main__":
     host = "8.8.8.8"
@@ -96,6 +97,7 @@ if __name__ == "__main__":
             'date': datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
             'download_speed_mbps': download_speed,
             'upload_speed_mbps': upload_speed,
-            'ping_ms': ping
+            'ping_ms': ping,
+            'nodo': server_name
             }
     insertar_db(result, "speedtest")
