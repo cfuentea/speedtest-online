@@ -1,6 +1,23 @@
-import speedtest, socket, subprocess
+import speedtest, socket, subprocess, os
+from dotenv import load_dotenv
 from datetime import datetime
 from ping3 import ping, verbose_ping
+from pymongo import MongoClient
+
+# carga de variables de entorno
+load_dotenv()
+
+db_host = os.getenv('DB_HOST')
+db_user = os.getenv('DB_USER')
+db_pass = os.getenv('DB_PASSWD')
+
+# formato normalizado de fecha
+hoy = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+
+mongo_uri = f"mongodb+srv://{db_user}:{db_pass}@{db_host}/?retryWrites=true&w=majority"
+
+# nombre del servidor (sonda) que correra el script
+server_name = socket.gethostname()
 
 def mide_latencia(host='8.8.8.8'):
     tiempo = ping(host)
@@ -29,40 +46,56 @@ def prueba_resolucion_dns(dominio="www.google.com"):
     except socket.gaierror:
         return False
 
+
+def inserta_db(data, coleccion):
+    client = MongoClient(mongo_uri)
+    db = client.Cluster0
+    collection = db[coleccion]
+    collection.insert_one(data)
+
 if __name__ == "__main__":
     host = "8.8.8.8"
     dominio = "www.google.com"
 
     latencia = mide_latencia(host)
-    if latencia:
-        print(f"Latencia hacia {host}: {latencia} ms")
-    else:
-        print(f"No se pudo medir la latencia hacia {host}")
+    data = {
+            'nodo': server_name, 
+            'date': datetime.today().strftime('%Y-%m-%d %H:%M:%S'), 
+            'host': host, 
+            'latencia': latencia 
+            }
+    insertar_db(data, "latencias")
 
     perdidos = verifica_intermitencia(host)
     if perdidos is not None:
-        print(f"Paquetes perdidos hacia {host}: {perdidos}")
-    else:
-        print(f"No se pudo verificar intermitencia hacia {host}")
+        data = {
+                'nodo': server_name, 
+                'date': datetime.today().strftime('%Y-%m-%d %H:%M:%S'), 
+                'host': host, 
+                'paquetes_perdidos': perdidos
+                }
+        insertar_db(data, "intermitencias")
 
     dns_exitoso = prueba_resolucion_dns(dominio)
-    if dns_exitoso:
-        print(f"Resolución DNS para {dominio} fue exitosa.")
-    else:
-        print(f"Resolución DNS para {dominio} falló.")
+    data = {
+            'nodo': server_name, 
+            'date': datetime.today().strftime('%Y-%m-%d %H:%M:%S'), 
+            'dominio': dominio, 
+            'resolucion_exitosa': dns_exitoso
+            }
+    insertar_db(data, "resolucion_dns")
 
-# Ejecutar la prueba de velocidad
-speed = speedtest.Speedtest(secure=True)
-speed.get_best_server()
-download_speed = speed.download() / (10**6)  # Convertir de bits a Mbps
-upload_speed = speed.upload() / (10**6)  # Convertir de bits a Mbps
-ping = speed.results.ping
+    # Ejecutar la prueba de velocidad
+    speed = speedtest.Speedtest(secure=True)
+    speed.get_best_server()
+    download_speed = speed.download() / (10**6)  # Convertir de bits a Mbps
+    upload_speed = speed.upload() / (10**6)  # Convertir de bits a Mbps
+    ping = speed.results.ping
     
-result = {
-        'date': datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
-    'download_speed_mbps': download_speed,
-    'upload_speed_mbps': upload_speed,
-    'ping_ms': ping
-}
-    
-print(result)
+    result = {
+            'date': datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
+            'download_speed_mbps': download_speed,
+            'upload_speed_mbps': upload_speed,
+            'ping_ms': ping
+            }
+    insertar_db(result, "speedtest")
