@@ -1,4 +1,5 @@
 import speedtest, socket, subprocess, os
+import logging
 from dotenv import load_dotenv
 from datetime import datetime
 from ping3 import ping, verbose_ping
@@ -19,6 +20,11 @@ mongo_uri = f"mongodb+srv://{db_user}:{db_pass}@{db_host}/?retryWrites=true&w=ma
 
 # nombre del servidor (sonda) que correra el script
 server_name = socket.gethostname()
+
+# manejo de errores
+current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+logging.basicConfig(filename=f'error_log_{current_time}.log', level=logging.ERROR)
+
 
 def mide_latencia(host='8.8.8.8'):
     tiempo = ping(host)
@@ -71,9 +77,9 @@ def insertar_db(data, coleccion):
         collection = db[coleccion]
         collection.insert_one(data)
     except ConnectionFailure as c:
-        print(f"Fallo en la conexion: {c}")
+        logging.error(f"Fallo en la conexionn: {c}")
     except PyMongoError as e:
-        print(f"Error en PyMongo: {e}")
+        logging.error(f"Error en PyMongo: {e}")
     finally:
         if 'client' in locals():
             client.close()
