@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 from ping3 import ping, verbose_ping
 from pymongo import MongoClient
+from pymongo.errors import PyMongoError, ConnectionFailure
 
 # carga de variables de entorno
 load_dotenv()
@@ -46,13 +47,36 @@ def prueba_resolucion_dns(dominio="www.google.com"):
     except socket.gaierror:
         return False
 
+def prueba_speedtest(fecha, nodo):
+    speed = speedtest.Speedtest(secure=True)
+    speed.get_best_server()
+    download_speed = speed.download() / (10**6)  # Convertir de bits a Mbps
+    upload_speed = speed.upload() / (10**6)  # Convertir de bits a Mbps
+    ping = speed.results.ping
+
+    result = {
+            'date': fecha,
+            'download_speed_mbps': download_speed,
+            'upload_speed_mbps': upload_speed,
+            'ping_ms': ping,
+            'nodo': nodo
+            }
+    
+    return result
 
 def insertar_db(data, coleccion):
-    client = MongoClient(mongo_uri)
-    db = client.Cluster0
-    collection = db[coleccion]
-    collection.insert_one(data)
-    client.close()
+    try:
+        client = MongoClient(mongo_uri)
+        db = client.Cluster0
+        collection = db[coleccion]
+        collection.insert_one(data)
+    except ConnectionFailure as c:
+        print(f"Fallo en la conexion: {c}")
+    except PyMongoError as e:
+        print(f"Error en PyMongo: {e}")
+    finally:
+        if 'client' in locals():
+            client.close()
 
 if __name__ == "__main__":
     host = "8.8.8.8"
@@ -86,18 +110,5 @@ if __name__ == "__main__":
             }
     insertar_db(data, "resolucion_dns")
 
-    # Ejecutar la prueba de velocidad
-    speed = speedtest.Speedtest(secure=True)
-    speed.get_best_server()
-    download_speed = speed.download() / (10**6)  # Convertir de bits a Mbps
-    upload_speed = speed.upload() / (10**6)  # Convertir de bits a Mbps
-    ping = speed.results.ping
-    
-    result = {
-            'date': hoy,
-            'download_speed_mbps': download_speed,
-            'upload_speed_mbps': upload_speed,
-            'ping_ms': ping,
-            'nodo': server_name
-            }
-    insertar_db(result, "speedtest")
+    prueba_velocidad = prueba_speedtest(hoy, server_name)
+    insertar_db(prueba_velocidad, "speedtest")
