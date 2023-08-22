@@ -106,15 +106,20 @@ if __name__ == "__main__":
                 'paquetes_perdidos': perdidos
                 }
         insertar_db(data, "intermitencias")
+    try:
+        dns_exitoso = prueba_resolucion_dns(dominio)
+        data = {
+                'nodo': server_name, 
+                'date': hoy, 
+                'dominio': dominio, 
+                'resolucion_exitosa': dns_exitoso
+                }
+        insertar_db(data, "resolucion_dns")
+    except:
+        print (f"Error en prueba de dns")
 
-    dns_exitoso = prueba_resolucion_dns(dominio)
-    data = {
-            'nodo': server_name, 
-            'date': hoy, 
-            'dominio': dominio, 
-            'resolucion_exitosa': dns_exitoso
-            }
-    insertar_db(data, "resolucion_dns")
-
-    prueba_velocidad = prueba_speedtest(hoy, server_name)
-    insertar_db(prueba_velocidad, "speedtest")
+    try:
+        prueba_velocidad = prueba_speedtest(hoy, server_name)
+        insertar_db(prueba_velocidad, "speedtest")
+    except:
+        print (f"Error en ejecucion de speedtest")
