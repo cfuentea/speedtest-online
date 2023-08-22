@@ -121,5 +121,5 @@ if __name__ == "__main__":
     try:
         prueba_velocidad = prueba_speedtest(hoy, server_name)
         insertar_db(prueba_velocidad, "speedtest")
-    except:
-        logging.error(f"Error en ejecucion de speedtest")
+    except Exception as e:
+        logging.error(f"Error en ejecucion de speedtest: {e}")
