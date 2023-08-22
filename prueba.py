@@ -116,10 +116,10 @@ if __name__ == "__main__":
                 }
         insertar_db(data, "resolucion_dns")
     except:
-        print (f"Error en prueba de dns")
+        logging.error(f"Error en prueba de dns")
 
     try:
         prueba_velocidad = prueba_speedtest(hoy, server_name)
         insertar_db(prueba_velocidad, "speedtest")
     except:
-        print (f"Error en ejecucion de speedtest")
+        logging.error(f"Error en ejecucion de speedtest")
