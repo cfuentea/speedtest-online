@@ -1,4 +1,5 @@
 import speedtest, socket, subprocess, os
+import json
 import logging
 from dotenv import load_dotenv
 from datetime import datetime
@@ -54,20 +55,31 @@ def prueba_resolucion_dns(dominio="www.google.com"):
         return False
 
 def prueba_speedtest(fecha, nodo):
-    speed = speedtest.Speedtest(secure=True)
-    speed.get_best_server()
-    download_speed = speed.download() / (10**6)  # Convertir de bits a Mbps
-    upload_speed = speed.upload() / (10**6)  # Convertir de bits a Mbps
-    ping = speed.results.ping
+    cmd = "/usr/bin/speedtest"
+    argumentos = " --json --secure"
+    ejecutar = f"{cmd} {argumentos}"
+    status, outplain = subprocess.getstatusoutput(ejecutar)
+    output=json.loads(outplain)
+    downSpeed = int(int(output["download"]) / (10**6) )
+    upSpeed =  int(int(output["upload"]) / (10**6) )
+    serverId = output["server"]["id"]
+    ping = output["ping"]
+    latency = output["server"]["latency"]
+    isp = output["client"]["isp"]
+    ip = output["client"]["ip"]
 
     result = {
-            'date': fecha,
-            'download_speed_mbps': download_speed,
-            'upload_speed_mbps': upload_speed,
-            'ping_ms': ping,
-            'nodo': nodo
+            'date': fecha, 
+            'nodo': nodo, 
+            'download_speed_mbps': downSpeed, 
+            'upload_speed_mbps': upSpeed, 
+            'server_id': serverId,
+            'ping_ms': ping, 
+            'server_latency': latency, 
+            'isp': isp, 
+            'ip': ip
             }
-    
+
     return result
 
 def insertar_db(data, coleccion):
@@ -106,20 +118,15 @@ if __name__ == "__main__":
                 'paquetes_perdidos': perdidos
                 }
         insertar_db(data, "intermitencias")
-    try:
-        dns_exitoso = prueba_resolucion_dns(dominio)
-        data = {
-                'nodo': server_name, 
-                'date': hoy, 
-                'dominio': dominio, 
-                'resolucion_exitosa': dns_exitoso
-                }
-        insertar_db(data, "resolucion_dns")
-    except:
-        logging.error(f"Error en prueba de dns")
 
-    try:
-        prueba_velocidad = prueba_speedtest(hoy, server_name)
-        insertar_db(prueba_velocidad, "speedtest")
-    except Exception as e:
-        logging.error(f"Error en ejecucion de speedtest: {e}")
+    dns_exitoso = prueba_resolucion_dns(dominio)
+    data = {
+            'nodo': server_name, 
+            'date': hoy, 
+            'dominio': dominio, 
+            'resolucion_exitosa': dns_exitoso
+            }
+    insertar_db(data, "resolucion_dns")
+
+    prueba_velocidad = prueba_speedtest(hoy, server_name)
+    insertar_db(prueba_velocidad, "speedtest")
