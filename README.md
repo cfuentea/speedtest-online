@@ -4,7 +4,7 @@ Script para mediciones básicas de velocidad, latencia, intermitencia (pérdida 
 ### Ejecutar
 
 ```shell
-docker run --rm -w /tmp -v $(pwd):/tmp -h $(hostname) cfuentealba/speedtest:latest python3 prueba.py
+docker run --rm -w /tmp -v $(pwd):/tmp -h $(hostname) --dns 200.28.4.130 --dns 200.28.4.129 cfuentealba/speedtest:latest python3 prueba.py
 ```
 
 
