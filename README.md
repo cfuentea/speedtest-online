@@ -6,8 +6,13 @@ Script para mediciones básicas de velocidad, latencia, intermitencia (pérdida 
 ```shell
 docker run --rm -w /tmp -v $(pwd):/tmp -h $(hostname) --dns 200.28.4.130 --dns 200.28.4.129 cfuentealba/speedtest:latest python3 prueba.py
 ```
+## Selenium test
+```shell
 
-Usar test\_selenium.py para ejecutar test hacia beta.speedtest.net
+sudo docker build -t selenium-speedtest .
+
+sudo docker run --rm selenium-speedtest
+```
 
 ### Dockerhub
 https://hub.docker.com/r/cfuentealba/speedtest/tags
